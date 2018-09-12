@@ -76,12 +76,33 @@ def get_opened_serial_port(file_path):
 
 
 def send_listd_output_to_fipy(ser, command):
-    """x"""
-    ser.write(b'response to the listd command\n')
+    """Return representative listd data, as a real datalogger would.
+
+    The following is output produced by a dataTaker DT80, over its
+    serial port, in response to the 'listd' command.
+
+    The communications options for the dataTaker's serial (host) port
+    were:
+        command mode
+        57600
+        8
+        1
+        none
+        software
+    """
+    captured_listd_output = """listd
+ Job      Sch Type       Ov Lg Go  Recs      Capacity  First                Last                 File
+ ======== === ========== == == ==  ========  ========  ===================  ===================  ===========================================
+*CONFIG   A   Data  Live Y  Y  Y       2380    249660  2018-08-09 10:30:00  2018-09-04 17:20:00  B:\JOBS\CONFIG\A\DATA_A.DBD
+"""
+    #ser.write(b'response to the listd command\n')
+    ser.write(captured_listd_output.encode())
 
 
 def send_copyd_output_to_fipy(ser, command):
-    """x"""
+    """Produce CSV and generate a bogus header-row."""
+    bogus_header =  '"Timestamp", "TZ", "Ext Temp"'
+
     ser.write(b'response to the copyd command\n')
 
 
