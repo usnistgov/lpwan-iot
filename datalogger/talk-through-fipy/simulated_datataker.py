@@ -78,8 +78,8 @@ def get_opened_serial_port(file_path):
 def send_listd_output_to_fipy(ser, command):
     """Return representative listd data, as a real datalogger would.
 
-    The following is output produced by a dataTaker DT80, over its
-    serial port, in response to the 'listd' command.
+    The following output data was produced by a dataTaker DT80, over
+    its serial port, in response to the 'listd' command.
 
     The communications options for the dataTaker's serial (host) port
     were:
@@ -95,15 +95,52 @@ def send_listd_output_to_fipy(ser, command):
  ======== === ========== == == ==  ========  ========  ===================  ===================  ===========================================
 *CONFIG   A   Data  Live Y  Y  Y       2380    249660  2018-08-09 10:30:00  2018-09-04 17:20:00  B:\JOBS\CONFIG\A\DATA_A.DBD
 """
-    #ser.write(b'response to the listd command\n')
     ser.write(captured_listd_output.encode())
 
 
 def send_copyd_output_to_fipy(ser, command):
-    """Produce CSV and generate a bogus header-row."""
-    bogus_header =  '"Timestamp", "TZ", "Ext Temp"'
+    """Return representative copyd data, as a real datalogger would.
 
-    ser.write(b'response to the copyd command\n')
+    The following data was produced by a dataTaker DT80, over its
+    serial port, in response to the command:
+
+        copyd archive=y start=2018-08-29T16:00:00.000
+
+    This command requested all records after a point in time,
+    including records that have been written to archive files.
+
+    The command produces CSV and generate a header-row."""
+
+    captured_copyd_output = """DT80> "Timestamp","TZ","T3 TC_1B (degC)","T3 TC_1P (degC)","T3 TC_2B (degC)","T3 TC_2P (degC)","T3 TC_3B (degC)","T3 TC_3P (degC)","T3 TC_4B (degC)","T3 TC_4P (degC)","T3 TC_5B (degC)","T3 TC_5P (mv)","T3 TC_6B (mv)","T3 TC_6P (degC)","T3 TC_7B (degC)","T3 TC_7P (degC)","T3 NR2lite VDC (mv)","T3 Pyran UP  VDC (mV)","T3 Pyran Down VDC (mV)","T3 SDI12_0 (U-velocity)","T3 SDI12_1 (V-velocity)","T3 SDI12_2 (status)"
+2018/08/29 16:00:00.001,n,22.703516,OverRange,OverRange,22.456284,OverRange,OverRange,22.651436,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,NotYetSet,NotYetSet,NotYetSet
+2018/08/29 16:10:00.005,n,22.956048,OverRange,OverRange,22.617792,OverRange,OverRange,22.825902,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,NotYetSet,NotYetSet,NotYetSet
+2018/08/29 16:20:00.007,n,22.79914,OverRange,OverRange,22.517224,OverRange,OverRange,22.716694,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,NotYetSet,NotYetSet,NotYetSet
+2018/09/04 16:20:00.005,n,22.766832,OverRange,OverRange,21.913016,OverRange,OverRange,22.520006,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,NotYetSet,NotYetSet,NotYetSet
+2018/09/04 16:30:00.006,n,22.919674,OverRange,OverRange,22.113522,OverRange,OverRange,22.728958,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,NotYetSet,NotYetSet,NotYetSet
+2018/09/04 16:40:00.000,n,23.503174,OverRange,OverRange,22.715282,OverRange,OverRange,23.191666,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,NotYetSet,NotYetSet,NotYetSet
+2018/09/04 16:50:00.000,n,24.045942,OverRange,OverRange,22.895158,OverRange,OverRange,24.045942,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,NotYetSet,NotYetSet,NotYetSet
+2018/09/04 17:00:00.000,n,23.744868,OverRange,OverRange,22.939612,OverRange,OverRange,23.377162,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,NotYetSet,NotYetSet,NotYetSet
+2018/09/04 17:10:00.005,n,23.51624,OverRange,OverRange,22.51059,OverRange,OverRange,23.226038,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,NotYetSet,NotYetSet,NotYetSet
+2018/09/04 17:20:00.000,n,23.415284,OverRange,OverRange,22.456824,OverRange,OverRange,23.31993,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,NotYetSet,NotYetSet,NotYetSet
+2018/09/04 17:30:00.000,n,23.6982,OverRange,OverRange,22.60572,OverRange,OverRange,23.403764,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,NotYetSet,NotYetSet,NotYetSet
+2018/09/04 17:40:00.000,n,23.670172,OverRange,OverRange,22.8814,OverRange,OverRange,23.553204,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,NotYetSet,NotYetSet,NotYetSet
+2018/09/04 17:50:00.004,n,23.685292,OverRange,OverRange,22.926718,OverRange,OverRange,23.460002,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,NotYetSet,NotYetSet,NotYetSet
+2018/09/04 18:00:00.007,n,23.736564,OverRange,OverRange,22.926016,OverRange,OverRange,23.589286,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,NotYetSet,NotYetSet,NotYetSet
+2018/09/04 18:10:00.000,n,23.854036,OverRange,OverRange,23.126062,OverRange,OverRange,23.70679,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,NotYetSet,NotYetSet,NotYetSet
+2018/09/04 18:20:00.000,n,23.875268,OverRange,OverRange,22.809004,OverRange,OverRange,23.719552,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,NotYetSet,NotYetSet,NotYetSet
+2018/09/04 18:30:00.000,n,23.842532,OverRange,OverRange,23.05402,OverRange,OverRange,23.76477,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,NotYetSet,NotYetSet,NotYetSet
+2018/09/04 18:40:00.000,n,23.656604,OverRange,OverRange,22.90214,OverRange,OverRange,23.556964,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,NotYetSet,NotYetSet,NotYetSet
+2018/09/04 22:30:00.013,n,21.905168,OverRange,OverRange,21.718812,OverRange,OverRange,21.97017,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,NotYetSet,NotYetSet,NotYetSet
+2018/09/04 22:40:00.000,n,22.283358,OverRange,OverRange,21.897616,OverRange,OverRange,22.339816,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,NotYetSet,NotYetSet,NotYetSet
+2018/09/04 22:50:00.000,n,22.512174,OverRange,OverRange,21.952982,OverRange,OverRange,22.585782,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,NotYetSet,NotYetSet,NotYetSet
+2018/09/04 23:00:00.000,n,22.63168,OverRange,OverRange,21.994402,OverRange,OverRange,22.679422,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,NotYetSet,NotYetSet,NotYetSet
+2018/09/04 23:10:00.000,n,22.766266,OverRange,OverRange,22.176562,OverRange,OverRange,22.831352,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,NotYetSet,NotYetSet,NotYetSet
+2018/09/04 23:20:00.000,n,22.97408,OverRange,OverRange,22.310782,OverRange,OverRange,23.013114,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,NotYetSet,NotYetSet,NotYetSet
+2018/09/04 23:30:00.001,n,23.142354,OverRange,OverRange,22.401118,OverRange,OverRange,23.207392,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,OverRange,NotYetSet,NotYetSet,NotYetSet
+Unload complete.
+"""
+    ser.write(captured_copyd_output.encode())
+    #ser.write(b'response to the copyd command\n')
 
 
 def send_error_message_to_fipy(ser, error_msg):
