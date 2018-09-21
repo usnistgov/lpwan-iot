@@ -103,9 +103,28 @@ def main():
         ### add your repeated execution code here
 
         print("Cycle: " , cycle)
+
+        #static date-time value for now
+        date_val, time_val = encode_date_time_value('2018/09/04 16:40:00.000')
+
         my_counter += 1
         int_counter = int(my_counter)
-        payload = (struct.pack('>l', int_counter))
+        #payload = (struct.pack('>l', int_counter) + struct.pack('>l', date_val) + struct.pack('>l', time_val))
+
+        #payload = (struct.pack('>l', int_counter) + struct.pack('>l', date_val) + struct.pack('>l', date_val))
+
+        #this worked, with corresponding server javascript
+        #payload = (struct.pack('>l', int_counter) + struct.pack('>l', int_counter))
+
+        #worked, with corresponding javascript
+        #payload = (struct.pack('>l', date_val) + struct.pack('>l', date_val))
+
+        #didn't work
+        #payload = (struct.pack('>l', date_val) + struct.pack('>l', time_val) + struct.pack('>l', time_val))
+
+
+        payload = (struct.pack('>l', date_val) + struct.pack('>l', time_val))
+
         sock.bind(1)
 
         #payload = bytes([fipy_number,
@@ -261,6 +280,49 @@ def get_jobs_list_from_datataker(uart):
             print('uart.readline() failed!')
         time.sleep(0.2)
     return(jobs_list)
+
+
+def encode_date_time_value(val):
+    """Encode a dataTaker date-time into 2 4-byte values to send via LORA."""
+    #Recognize a value like: 2018/09/04 16:40:00.000
+
+    # Encode the date part, a value like: 2018/09/04
+    date_val = val.split()[0]
+    year = date_val.split('/')[0]
+    month = date_val.split('/')[1]
+    day = date_val.split('/')[2]
+
+    year_int = int(year)
+    year_bits = year_int <<16
+    month_int = int(month)
+    month_bits = month_int <<8
+    day_bits = int(day)
+
+    date_val = year_bits | month_bits | day_bits
+
+    # Recognize the time part, a value like: 16:40:00.000
+    time_val = val.split()[1]
+    time_val = time_val.strip()
+    hours = time_val.split(':')[0]
+    minutes = time_val.split(':')[1]
+    seconds = time_val.split(':')[2]
+    whole_seconds = seconds.split('.')[0]
+    microseconds = seconds.split('.')[1]
+
+    hours_int = int(hours)
+    hours_bits = hours_int <<24
+    minutes_int = int(minutes)
+    minutes_bits = minutes_int <<16
+    whole_seconds_int = int(whole_seconds)
+    whole_seconds_bits = whole_seconds_int <<8
+    microseconds_bits = int(microseconds)
+
+    #time_val = (hours_bits | minutes_bits | whole_seconds_bits | microseconds_bits)
+    #22 is degrees; 70 is .70 degrees
+    degrees = 22 <<8
+    time_val = (hours_bits | minutes_bits | degrees | 70)
+
+    return (date_val, time_val)
 
 
 def get_records_from_datataker(uart):
