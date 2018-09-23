@@ -72,6 +72,22 @@ __author__ = "Sebastian Barillaro and Lee Badger"
 def main():
     """Execution starts here, after all functions have been defined."""
     print('my Fipy starting up!')
+
+    uart = get_configured_uart()
+    time.sleep(1.0)
+
+#    jobs_list = get_jobs_list_from_datataker(uart)
+#    print('the returned jobs: ', jobs_list)
+
+    records = get_records_from_datataker(uart)
+    cur_record_index = 0
+    max_record_index = len(records) - 1
+
+    print('num_records', len(records))
+    print('first record:', records[0])
+    print('last record:', records[01])
+    #print('the returned records: ', records)
+
     pycom.heartbeat(False)
 
     app_swkey = binascii.unhexlify(mykeys.app_swkey)
@@ -105,35 +121,25 @@ def main():
         print("Cycle: " , cycle)
 
         #static date-time value for now
-        date_val, time_val = encode_date_time_value('2018/09/04 16:40:00.000')
+        #dt_time_val = '2018/09/04 16:40:00.000'
+        #dt_temp_val = '22.703516'
+
+        cur_record = records[cur_record_index]
+        if cur_record_index >= max_record_index:
+            cur_record_index = 0
+        else:
+            cur_record_index += 1
+        dt_time_val = cur_record[0]
+        dt_temp_val = cur_record[1]
+        
+        date_and_hours, time_and_temp = encode_time_temp_value(dt_time_val, dt_temp_val)
 
         my_counter += 1
         int_counter = int(my_counter)
-        #payload = (struct.pack('>l', int_counter) + struct.pack('>l', date_val) + struct.pack('>l', time_val))
 
-        #payload = (struct.pack('>l', int_counter) + struct.pack('>l', date_val) + struct.pack('>l', date_val))
-
-        #this worked, with corresponding server javascript
-        #payload = (struct.pack('>l', int_counter) + struct.pack('>l', int_counter))
-
-        #worked, with corresponding javascript
-        #payload = (struct.pack('>l', date_val) + struct.pack('>l', date_val))
-
-        #didn't work
-        #payload = (struct.pack('>l', date_val) + struct.pack('>l', time_val) + struct.pack('>l', time_val))
-
-
-        payload = (struct.pack('>l', date_val) + struct.pack('>l', time_val))
+        payload = (struct.pack('>l', date_and_hours) + struct.pack('>l', time_and_temp))
 
         sock.bind(1)
-
-        #payload = bytes([fipy_number,
-        #                 msgReceived,
-        #                 cycle//(255*255*255*255),
-        #                 cycle//(255*255*255),
-        #                 cycle//(255*255),
-        #                 cycle//255,
-        #                 cycle%255])
 
         print("payload =", str(payload))
 
@@ -165,15 +171,6 @@ def main():
         time.sleep(delay)
         cycle = cycle + 1
         print("")
-
-#    uart = get_configured_uart()
-#    time.sleep(1.0)
-#
-#    jobs_list = get_jobs_list_from_datataker(uart)
-#    print('the returned jobs: ', jobs_list)
-#
-#    records = get_records_from_datataker(uart)
-#    print('the returned records: ', records)
 
 
 def get_fipy_number_and_address(dev_EUI):
@@ -282,26 +279,36 @@ def get_jobs_list_from_datataker(uart):
     return(jobs_list)
 
 
-def encode_date_time_value(val):
-    """Encode a dataTaker date-time into 2 4-byte values to send via LORA."""
+def encode_time_temp_value(dt_time_val, dt_temp_val):
+    """Encode a dataTaker time and temp values into 2 4-byte values to send
+    via LORA.
+
+    This function assumes we have only two 4-bytes values to work
+    with, so we use every byte.
+    """
     #Recognize a value like: 2018/09/04 16:40:00.000
 
     # Encode the date part, a value like: 2018/09/04
-    date_val = val.split()[0]
+    date_val = dt_time_val.split()[0]
     year = date_val.split('/')[0]
     month = date_val.split('/')[1]
     day = date_val.split('/')[2]
 
+    # Given that all years of interest will be in the same millennium,
+    # send only the lowest 3 digits of the 4-digit year (e.g., for
+    # 2018, send 018), and add the 2000 back on the server side.
     year_int = int(year)
-    year_bits = year_int <<16
-    month_int = int(month)
-    month_bits = month_int <<8
-    day_bits = int(day)
+    year_int -= 2000
+    year_bits = year_int <<24
 
-    date_val = year_bits | month_bits | day_bits
+    month_int = int(month)
+    month_bits = month_int <<16
+
+    day_int = int(day)
+    day_bits = day_int <<8
 
     # Recognize the time part, a value like: 16:40:00.000
-    time_val = val.split()[1]
+    time_val = dt_time_val.split()[1]
     time_val = time_val.strip()
     hours = time_val.split(':')[0]
     minutes = time_val.split(':')[1]
@@ -310,19 +317,29 @@ def encode_date_time_value(val):
     microseconds = seconds.split('.')[1]
 
     hours_int = int(hours)
-    hours_bits = hours_int <<24
+    hours_bits = hours_int
+
+    # Pack values into first int to return
+    date_and_hours_val = year_bits | month_bits | day_bits | hours_bits
+
     minutes_int = int(minutes)
-    minutes_bits = minutes_int <<16
+    minutes_bits = minutes_int <<24
     whole_seconds_int = int(whole_seconds)
-    whole_seconds_bits = whole_seconds_int <<8
-    microseconds_bits = int(microseconds)
+    whole_seconds_bits = whole_seconds_int <<16
 
-    #time_val = (hours_bits | minutes_bits | whole_seconds_bits | microseconds_bits)
-    #22 is degrees; 70 is .70 degrees
-    degrees = 22 <<8
-    time_val = (hours_bits | minutes_bits | degrees | 70)
+    # A temperature looks like:  22.703516
+    degrees = dt_temp_val.split('.')[0]
+    degrees_int = int(degrees)
+    degrees_bits = degrees_int << 8
 
-    return (date_val, time_val)
+    fractional_degrees = dt_temp_val.split('.')[1]
+    fractional_degrees = fractional_degrees[:2]
+    fractional_degrees_bits = int(fractional_degrees)
+
+    # Pack values into second int to return
+    time_and_temp_val = minutes_bits | whole_seconds_bits | degrees_bits | fractional_degrees_bits
+
+    return (date_and_hours_val, time_and_temp_val)
 
 
 def get_records_from_datataker(uart):
